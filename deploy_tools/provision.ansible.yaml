@@ -5,6 +5,7 @@
   sudo: yes
 
   vars:
+      user: ubuntu
       host: "{{ inventory_hostname }}"
       site_folder: /home/{{ ansible_ssh_user }}/sites/{{ host }}
       source_folder: /home/{{ ansible_ssh_user }}/sites/{{ host }}/source
@@ -14,7 +15,11 @@
 
   tasks:
     - name: create directory structure if necessary
-      file: path="{{ site_folder }}"/{{ item }} state=directory
+      file: path="{{ site_folder }}"/{{ item }}
+            owner={{ user }}
+            group={{ user }}
+            mode=0775
+            state=directory
       with_items:
          - database
          - static
@@ -66,7 +71,7 @@
         dest={{ settings_file }}
         backrefs=yes
         regexp='ALLOWED_HOSTS = '
-        line='ALLOWED_HOSTS = [{{ host }}]'
+        line='ALLOWED_HOSTS = ["{{ host }}"]'
 
     - name: import secret key
       lineinfile:
