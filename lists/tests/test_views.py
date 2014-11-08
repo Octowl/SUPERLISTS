@@ -5,7 +5,6 @@ from django.template.loader import render_to_string
 from django.utils.html import escape
 from unittest import skip
 
-from lists.views import home_page
 from lists.models import Item, List
 from lists.forms import (
     DUPLICATE_ITEM_ERROR, EMPTY_LIST_ERROR,
