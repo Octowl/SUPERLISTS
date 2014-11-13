@@ -1,8 +1,0 @@
-[live]
-superlists.octowl.com ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/Users/aziz/Key_Pairs/SUPERLISTS.pem
-
-[staging]
-superlists-staging.octowl.com ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/Users/aziz/Key_Pairs/SUPERLISTS.pem
-
-[local]
-localhost ansible_ssh_port=8000 ansible_host=127.0.0.1
