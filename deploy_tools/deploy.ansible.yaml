@@ -1,0 +1,90 @@
+---
+
+- hosts: all
+
+  vars:
+      user: ubuntu
+      host: "{{ inventory_hostname }}"
+      site_folder: /home/{{ ansible_ssh_user }}/sites/{{ host }}
+      source_folder: /home/{{ ansible_ssh_user }}/sites/{{ host }}/source
+      virtualenv_folder: /home/{{ ansible_ssh_user }}/sites/{{ host }}/virtualenv
+      settings_file: /home/{{ ansible_ssh_user }}/sites/{{ host }}/source/superlists/settings.py
+      secret_key_file: /home/{{ ansible_ssh_user }}/sites/{{ host }}/source/superlists/secret_key.py
+
+  tasks:
+    - name: create directory structure if necessary
+      file: path="{{ site_folder }}"/{{ item }}
+            owner={{ user }}
+            group={{ user }}
+            mode=0775
+            state=directory
+      with_items:
+         - database
+         - static
+         - virtualenv
+         - source
+
+    - name: get latest source
+      git: repo=https://github.com/Octowl/SUPERLISTS.git
+           dest={{ source_folder }}
+           update=yes
+           accept_hostkey=yes
+
+    - name: update virtualenv
+      pip: requirements="{{ source_folder }}"/requirements.txt
+           virtualenv="{{ virtualenv_folder }}"
+
+    - name: update static files
+      django_manage: command=collectstatic
+                     app_path={{ source_folder }}
+                     virtualenv={{ virtualenv_folder }}
+
+    - name: update database
+      django_manage: command=migrate
+                     app_path={{ source_folder }}
+                     virtualenv={{ virtualenv_folder }}
+
+    - name: update debug settings
+      lineinfile:
+        dest={{ settings_file }}
+        backrefs=yes
+        regexp='^DEBUG = '
+        line='DEBUG = False'
+
+    - name: update template debug settings
+      lineinfile:
+        dest={{ settings_file }}
+        backrefs=yes
+        regexp='TEMPLATE_DEBUG = '
+        line='TEMPLATE_DEBUG = False'
+
+    - name: update allowed hosts
+      lineinfile:
+        dest={{ settings_file }}
+        backrefs=yes
+        regexp='ALLOWED_HOSTS = '
+        line='ALLOWED_HOSTS = ["{{ host }}"]'
+
+    - name: check if secret key exists
+      stat: path={{ secret_key_file }}
+      register: secret_key_stat
+
+    - name: create secret key
+      shell: echo `openssl rand -base64 50`
+      register: secret_key
+      when: not secret_key_stat.stat.exists
+
+    - name: write secret key to file
+      lineinfile:
+        dest={{ secret_key_file }}
+        create=yes
+        regexp='^SECRET_KEY = '
+        line="SECRET_KEY = '{{ secret_key.stdout }}'"
+      when: not secret_key_stat.stat.exists
+
+    - name: import secret key
+      lineinfile:
+        dest={{ settings_file }}
+        line='from .secret_key import SECRET_KEY'
+      when: not secret_key_stat.stat.exists
+
