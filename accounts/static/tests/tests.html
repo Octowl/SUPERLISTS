@@ -41,7 +41,7 @@ var user, token, urls, mockNavigator, requests, xhr;
 QUnit.module("navigator.id.watch tests", {
     setup: function () {
         user = 'current user';
-        token = 'csrf_token';
+        token = 'csrf token';
         urls = { login: 'login url', logout: 'logout url' };
         mockNavigator = {
             id: {
@@ -54,7 +54,7 @@ QUnit.module("navigator.id.watch tests", {
     },
     teardown: function () {
         mockNavigator.id.watch.reset();
-        xhr.restore()
+        xhr.restore();
     }
 });
 
@@ -97,7 +97,7 @@ QUnit.test("onlogin sends assertion with csrf token", 1, function () {
 QUnit.test("onlogout is just a placeholder", 1, function () {
     Superlists.Accounts.initialize(mockNavigator, user, token, urls);
     var onlogoutCallback = mockNavigator.id.watch.firstCall.args[0].onlogout;
-    equal(typeof onlogoutCallback, "function", "onlogout should be a function")
+    equal(typeof onlogoutCallback, "function", "onlogout should be a function");
 });
 
 QUnit.test("onlogin post failure should do navigator.id.logout", 2, function () {
