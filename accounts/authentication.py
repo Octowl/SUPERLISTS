@@ -9,10 +9,13 @@ PERSONA_VERIFY_URL = 'https://verifier.login.persona.org/verify'
 class PersonaAuthenticationBackend(object):
 
     def authenticate(self, assertion):
+        logging.warning('entering authentication function')
         response = requests.post(
             PERSONA_VERIFY_URL,
             data={'assertion': assertion, 'audience': settings.DOMAIN}
         )
+        logging.warning('got response from persona')
+        logging.warning(response.content.decoode())
         if response.ok and response.json()['status'] == 'okay':
             email=response.json()['email']
             try:
