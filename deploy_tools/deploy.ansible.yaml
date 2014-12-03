@@ -29,6 +29,8 @@
            dest={{ source_folder }}
            update=yes
            accept_hostkey=yes
+      notify:
+         - restart gunicorn
 
     - name: update virtualenv
       pip: requirements="{{ source_folder }}"/requirements.txt
@@ -43,27 +45,6 @@
       django_manage: command=migrate
                      app_path={{ source_folder }}
                      virtualenv={{ virtualenv_folder }}
-
-    - name: update debug settings
-      lineinfile:
-        dest={{ settings_file }}
-        backrefs=yes
-        regexp='^DEBUG = '
-        line='DEBUG = False'
-
-    - name: update template debug settings
-      lineinfile:
-        dest={{ settings_file }}
-        backrefs=yes
-        regexp='TEMPLATE_DEBUG = '
-        line='TEMPLATE_DEBUG = False'
-
-    - name: update allowed hosts
-      lineinfile:
-        dest={{ settings_file }}
-        backrefs=yes
-        regexp='ALLOWED_HOSTS = '
-        line='ALLOWED_HOSTS = ["{{ host }}"]'
 
     - name: check if secret key exists
       stat: path={{ secret_key_file }}
@@ -82,9 +63,13 @@
         line="SECRET_KEY = '{{ secret_key.stdout }}'"
       when: not secret_key_stat.stat.exists
 
-    - name: import secret key
-      lineinfile:
-        dest={{ settings_file }}
-        line='from .secret_key import SECRET_KEY'
-      when: not secret_key_stat.stat.exists
+    - name: update settings.py
+      template: src=./settings.py.j2
+                dest={{ settings_file }}
+      notify:
+         - restart gunicorn
 
+  handlers:
+    - name: restart gunicorn
+      sudo: yes
+      service: name=gunicorn-{{ host }} state=restarted
