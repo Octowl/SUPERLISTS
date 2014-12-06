@@ -1,3 +1,4 @@
+import logging
 import requests
 
 from django.conf import settings
@@ -15,7 +16,7 @@ class PersonaAuthenticationBackend(object):
             data={'assertion': assertion, 'audience': settings.DOMAIN}
         )
         logging.warning('got response from persona')
-        logging.warning(response.content.decoode())
+        logging.warning(response.content.decode())
         if response.ok and response.json()['status'] == 'okay':
             email=response.json()['email']
             try:
